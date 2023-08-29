@@ -49,7 +49,7 @@ func (server *Server) setupRouter() {
 	router.GET("/accounts", server.listAccounts)
 
 	router.POST("/transfers", server.createTransfer)
-
+	router.POST("/tokens/renew_access", server.renewAccessToken)
 	server.router = router
 }
 
