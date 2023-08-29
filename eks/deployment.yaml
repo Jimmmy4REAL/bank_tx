@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bank-tx
+  labels:
+    app: bank-tx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bank-tx
+  template:
+    metadata:
+      labels:
+        app: bank-tx
+    spec:
+      containers:
+      - name: bank-tx
+        image: 192918079784.dkr.ecr.eu-west-2.amazonaws.com/bank_tx:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
