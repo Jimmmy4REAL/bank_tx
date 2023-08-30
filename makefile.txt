@@ -11,11 +11,14 @@ migrateup:
     migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank_tx?sslmode=disable" -verbose up
 
 migratedown:
-    migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank_tx?sslmode=disable" -verbose down
+  migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank_tx?sslmode=disable" -verbose down
 migratedown1:
   migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank_tx?sslmode=disable" -verbose down 1
 migrateup1:
   migrate -path db/migration -database "postgresql://root:secret@localhost:5432/bank_tx?sslmode=disable" -verbose up 1
+
+create new schema:
+  migrate create -ext sql -dir db/migration -seq add_verify_email 
 
 proto:
 	rm -f pb/*.go

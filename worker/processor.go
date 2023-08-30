@@ -4,6 +4,7 @@ import (
 	"context"
 
 	db "github.com/Jimmmy4REAL/bank_tx/db/sqlc"
+	"github.com/Jimmmy4REAL/bank_tx/mail"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 )
@@ -22,10 +23,11 @@ type TaskProcessor interface {
 type RedisTaskProcessor struct {
 	server *asynq.Server // redis using here
 	store  db.Store
+	mailer mail.EmailSender
 }
 
 // taskProcessor (interface) as input - > redisTaskProcessor (struct) as output (specific config)
-func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, mailer mail.EmailSender) TaskProcessor {
 	// config server
 	server := asynq.NewServer(
 		redisOpt,
@@ -44,6 +46,7 @@ func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskPr
 	return &RedisTaskProcessor{
 		server: server,
 		store:  store,
+		mailer: mailer,
 	}
 }
 
