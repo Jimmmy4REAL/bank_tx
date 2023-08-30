@@ -12,7 +12,9 @@ import (
 	"github.com/Jimmmy4REAL/bank_tx/gapi"
 	"github.com/Jimmmy4REAL/bank_tx/pb"
 	"github.com/Jimmmy4REAL/bank_tx/util"
+	"github.com/Jimmmy4REAL/bank_tx/worker"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/hibiken/asynq"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -30,11 +32,29 @@ func main() {
 	}
 
 	store := db.NewStore(conn)
-	go runGatewayServer(config, *store)
-	runGrpcServer(config, *store)
+	// config redis_address so that publish and consumer be in same broker
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisAddress,
+	}
+	// run distributor and processor here - both using redisOpt
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+	go runTaskProcessor(config, redisOpt, *store)
+	go runGatewayServer(config, *store, taskDistributor)
+	runGrpcServer(config, *store, taskDistributor)
 }
-func runGrpcServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+
+func runTaskProcessor(config util.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	log.Printf("start task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal("failed to start task processor")
+	}
+}
+
+func runGrpcServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal("cannot create server", err)
 	}
@@ -55,8 +75,8 @@ func runGrpcServer(config util.Config, store db.Store) {
 	}
 }
 
-func runGatewayServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGatewayServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal("cannot create server:", err)
 	}
