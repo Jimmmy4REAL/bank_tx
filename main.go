@@ -10,6 +10,7 @@ import (
 	"github.com/Jimmmy4REAL/bank_tx/api"
 	db "github.com/Jimmmy4REAL/bank_tx/db/sqlc"
 	"github.com/Jimmmy4REAL/bank_tx/gapi"
+	"github.com/Jimmmy4REAL/bank_tx/mail"
 	"github.com/Jimmmy4REAL/bank_tx/pb"
 	"github.com/Jimmmy4REAL/bank_tx/util"
 	"github.com/Jimmmy4REAL/bank_tx/worker"
@@ -44,8 +45,8 @@ func main() {
 }
 
 func runTaskProcessor(config util.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
-
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 	log.Printf("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {
