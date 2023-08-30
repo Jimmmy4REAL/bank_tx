@@ -29,4 +29,7 @@ test:
     go test -v -cover ./...
 server:
     go run main.go
+evans:
+    evans --host localhost --port 9090 -r repl [config host here]
+
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc test server
